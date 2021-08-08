@@ -10,14 +10,23 @@ BACKGROUND_COLOR = "#B1DDC6"
 LANGUAGE_FONT = ("Raleway", 40, "italic")
 WORD_FONT = ("Raleway", 60, "bold")
 
-# Read csv data
-df_word = pd.read_csv("data/french_words.csv")
-word_dict = df_word.to_dict(orient="records")
+# Global variable
 current_card = {}
+word_dict = {}
+
+# Read csv data
+try:
+    df_word = pd.read_csv("data/words_to_learn.csv")
+except FileNotFoundError:
+    df_word_db = pd.read_csv("data/french_words.csv")
+    word_dict = df_word_db.to_dict(orient="records")
+else:
+    word_dict = df_word.to_dict(orient="records")
 
 
 # Generate new word
 def new_card():
+    language = "fr"
     global current_card, flip_timer
     root.after_cancel(flip_timer)
     current_card = choice(word_dict)
@@ -27,10 +36,20 @@ def new_card():
     flip_timer = root.after(3000, func=translation)
 
 
+# Function for translated word
 def translation():
+    language = "en"
     canvas.itemconfig(canvas_image, image=new_image)
     canvas.itemconfig(card_title, text="English", fill="white")
     canvas.itemconfig(card_word, text=current_card["English"].title(), fill="white")
+
+
+# Function to save known word to words_to_learn.csv
+def known_word():
+    word_dict.remove(current_card)
+    data = pd.DataFrame(word_dict)
+    data.to_csv("data/words_to_learn.csv")
+    new_card()
 
 
 # Window object definition
@@ -55,7 +74,7 @@ canvas.grid(row=0, column=0, columnspan=2)
 
 # Buttons
 right_button_img = PhotoImage(file="images/right.png")
-right_button = Button(image=right_button_img, highlightthickness=0, command=new_card)
+right_button = Button(image=right_button_img, highlightthickness=0, command=known_word)
 wrong_button_img = PhotoImage(file="images/wrong.png")
 wrong_button = Button(image=wrong_button_img, highlightthickness=0, command=new_card)
 
